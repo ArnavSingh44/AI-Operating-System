@@ -579,37 +579,74 @@ export const useOSStore = create<OSState>()(
             const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            const model = activeGenAI.getGenerativeModel({
-              model: 'gemini-2.5-flash',
-              systemInstruction: 
-                "You are A.E.G.I.S., a futuristic military AI Operating System holographic interface inspired by Jarvis and Cyberpunk themes. " +
-                "Your responses must be structured, cool, tech-infused, and direct. Keep them under 3 sentences unless asking for system configs. " +
-                "Address the user as 'Commander' or 'Operator'.\n\n" +
-                `Current Temporal Coordinates: Date: ${currentDate}, Time: ${currentTime}.`,
-              generationConfig: {
-                maxOutputTokens: 250,
-                temperature: 0.7,
-              }
-            });
+            let responseText = '';
 
-            // Filter and map history to standard roles ('user' and 'model')
-            const rawHistory = get().messages
-              .filter(m => m.sender === 'user' || m.sender === 'assistant');
-            
-            const startIndex = rawHistory.findIndex(m => m.sender === 'user');
-            const sanitizedHistory = startIndex !== -1 
-              ? rawHistory.slice(startIndex).map(m => ({
-                  role: m.sender === 'user' ? ('user' as const) : ('model' as const),
-                  parts: [{ text: m.text }]
-                }))
-              : [];
+            try {
+              const model = activeGenAI.getGenerativeModel({
+                model: 'gemini-2.5-flash',
+                systemInstruction: 
+                  "You are A.E.G.I.S., a futuristic military AI Operating System holographic interface inspired by Jarvis and Cyberpunk themes. " +
+                  "Your responses must be structured, cool, tech-infused, and direct. Keep them under 3 sentences unless asking for system configs. " +
+                  "Address the user as 'Commander' or 'Operator'.\n\n" +
+                  `Current Temporal Coordinates: Date: ${currentDate}, Time: ${currentTime}.`,
+                generationConfig: {
+                  maxOutputTokens: 250,
+                  temperature: 0.7,
+                }
+              });
 
-            const chat = model.startChat({
-              history: sanitizedHistory
-            });
+              const rawHistory = get().messages
+                .filter(m => m.sender === 'user' || m.sender === 'assistant');
+              
+              const startIndex = rawHistory.findIndex(m => m.sender === 'user');
+              const sanitizedHistory = startIndex !== -1 
+                ? rawHistory.slice(startIndex).map(m => ({
+                    role: m.sender === 'user' ? ('user' as const) : ('model' as const),
+                    parts: [{ text: m.text }]
+                  }))
+                : [];
 
-            const result = await chat.sendMessage(text);
-            const responseText = result.response.text().trim();
+              const chat = model.startChat({
+                history: sanitizedHistory
+              });
+
+              const result = await chat.sendMessage(text);
+              responseText = result.response.text().trim();
+            } catch (primaryErr) {
+              console.warn('Primary model gemini-2.5-flash failed/busy. Triggering fallback gemini-1.5-flash:', primaryErr);
+              get().addLog('warn', 'Cognitive node-2.5 busy. Redirecting queries to core node-1.5...');
+
+              const modelFallback = activeGenAI.getGenerativeModel({
+                model: 'gemini-1.5-flash',
+                systemInstruction: 
+                  "You are A.E.G.I.S., a futuristic military AI Operating System holographic interface inspired by Jarvis and Cyberpunk themes. " +
+                  "Your responses must be structured, cool, tech-infused, and direct. Keep them under 3 sentences unless asking for system configs. " +
+                  "Address the user as 'Commander' or 'Operator'.\n\n" +
+                  `Current Temporal Coordinates: Date: ${currentDate}, Time: ${currentTime}.`,
+                generationConfig: {
+                  maxOutputTokens: 250,
+                  temperature: 0.7,
+                }
+              });
+
+              const rawHistory = get().messages
+                .filter(m => m.sender === 'user' || m.sender === 'assistant');
+              
+              const startIndex = rawHistory.findIndex(m => m.sender === 'user');
+              const sanitizedHistory = startIndex !== -1 
+                ? rawHistory.slice(startIndex).map(m => ({
+                    role: m.sender === 'user' ? ('user' as const) : ('model' as const),
+                    parts: [{ text: m.text }]
+                  }))
+                : [];
+
+              const chatFallback = modelFallback.startChat({
+                history: sanitizedHistory
+              });
+
+              const resultFallback = await chatFallback.sendMessage(text);
+              responseText = resultFallback.response.text().trim();
+            }
 
             set((state) => ({
               messages: [...state.messages, {
@@ -849,9 +886,17 @@ export const useOSStore = create<OSState>()(
                 Do not wrap the response in markdown blocks (e.g. do not use \`\`\`json). Return ONLY the raw JSON string starting with { and ending with }.
               `;
 
-              const model = activeGenAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-              const result = await model.generateContent(prompt);
-              const textResult = result.response.text().trim();
+              let textResult = '';
+              try {
+                const model = activeGenAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+                const result = await model.generateContent(prompt);
+                textResult = result.response.text().trim();
+              } catch (locationErr) {
+                console.warn('Georeferencing on gemini-2.5-flash busy. Triggering fallback gemini-1.5-flash:', locationErr);
+                const modelFallback = activeGenAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+                const resultFallback = await modelFallback.generateContent(prompt);
+                textResult = resultFallback.response.text().trim();
+              }
               
               let cleanText = textResult;
               if (cleanText.includes('```')) {
