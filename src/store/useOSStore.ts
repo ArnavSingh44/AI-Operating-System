@@ -177,7 +177,7 @@ const initialGlobeNodes: GlobeNode[] = [
 ];
 
 const initialAdminSettings: AdminSettings = {
-  commanderName: 'ARNAV',
+  commanderName: 'UNASSIGNED',
   clearanceLevel: 'Level 5 Admin',
   theme: 'cyan',
   ttsVolume: 1.0,

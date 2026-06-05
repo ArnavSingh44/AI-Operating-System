@@ -9,6 +9,7 @@ import { SystemMonitor } from './components/SystemMonitor';
 import { LowerPanels } from './components/LowerPanels';
 import { BottomConsole } from './components/BottomConsole';
 import { AdminPanel } from './components/AdminPanel';
+import { OnboardingModal } from './components/OnboardingModal';
 import { motion } from 'framer-motion';
 
 function App() {
@@ -123,6 +124,9 @@ function App() {
 
       {/* 3. Sliding Admin Control Panel Drawer */}
       <AdminPanel />
+      
+      {/* 4. First-time Setup/Login Credentials Modal */}
+      <OnboardingModal />
     </div>
   );
 }
