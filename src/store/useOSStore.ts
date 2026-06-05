@@ -568,9 +568,9 @@ export const useOSStore = create<OSState>()(
         // Resolve active API key
         const customKey = get().adminSettings.geminiApiKey;
         const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-        const activeKey = (customKey && customKey.trim() !== '') ? customKey : envKey;
+        const activeKey = ((customKey && customKey.trim() !== '') ? customKey : envKey)?.trim();
         
-        const hasValidKey = activeKey && activeKey !== 'YOUR_GEMINI_API_KEY_HERE' && activeKey.trim() !== '';
+        const hasValidKey = activeKey && activeKey !== 'YOUR_GEMINI_API_KEY_HERE' && activeKey !== '';
         const activeGenAI = hasValidKey ? new GoogleGenerativeAI(activeKey) : null;
 
         // If it is a conversational query, hit Google Gemini!
@@ -795,9 +795,9 @@ export const useOSStore = create<OSState>()(
           // Resolve active API key
           const customKey = get().adminSettings.geminiApiKey;
           const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-          const activeKey = (customKey && customKey.trim() !== '') ? customKey : envKey;
+          const activeKey = ((customKey && customKey.trim() !== '') ? customKey : envKey)?.trim();
           
-          const hasValidKey = activeKey && activeKey !== 'YOUR_GEMINI_API_KEY_HERE' && activeKey.trim() !== '';
+          const hasValidKey = activeKey && activeKey !== 'YOUR_GEMINI_API_KEY_HERE' && activeKey !== '';
           const activeGenAI = hasValidKey ? new GoogleGenerativeAI(activeKey) : null;
 
           if (activeGenAI) {
