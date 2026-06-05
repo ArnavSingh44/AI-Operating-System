@@ -2,11 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize the Gemini client with the environment variable
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const hasValidKey = apiKey && apiKey !== 'YOUR_GEMINI_API_KEY_HERE' && apiKey.trim() !== '';
-const genAI = hasValidKey ? new GoogleGenerativeAI(apiKey) : null;
-
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'assistant' | 'system';
@@ -71,6 +66,7 @@ export interface AdminSettings {
   cpuOverride?: number;
   ramOverride?: number;
   tempOverride?: number;
+  geminiApiKey?: string;
 }
 
 interface OSState {
@@ -185,6 +181,7 @@ const initialAdminSettings: AdminSettings = {
   ttsRate: 1.05,
   sttAutoListen: false,
   fanSpeed: 3200,
+  geminiApiKey: '',
 };
 
 // Local rule-based fallback responses when Gemini is offline
@@ -568,13 +565,21 @@ export const useOSStore = create<OSState>()(
           return;
         }
 
+        // Resolve active API key
+        const customKey = get().adminSettings.geminiApiKey;
+        const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+        const activeKey = (customKey && customKey.trim() !== '') ? customKey : envKey;
+        
+        const hasValidKey = activeKey && activeKey !== 'YOUR_GEMINI_API_KEY_HERE' && activeKey.trim() !== '';
+        const activeGenAI = hasValidKey ? new GoogleGenerativeAI(activeKey) : null;
+
         // If it is a conversational query, hit Google Gemini!
-        if (genAI) {
+        if (activeGenAI) {
           try {
             const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            const model = genAI.getGenerativeModel({
+            const model = activeGenAI.getGenerativeModel({
               model: 'gemini-2.5-flash',
               systemInstruction: 
                 "You are A.E.G.I.S., a futuristic military AI Operating System holographic interface inspired by Jarvis and Cyberpunk themes. " +
@@ -787,7 +792,15 @@ export const useOSStore = create<OSState>()(
         let data;
 
         if (geocodingSuccess) {
-          if (genAI) {
+          // Resolve active API key
+          const customKey = get().adminSettings.geminiApiKey;
+          const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+          const activeKey = (customKey && customKey.trim() !== '') ? customKey : envKey;
+          
+          const hasValidKey = activeKey && activeKey !== 'YOUR_GEMINI_API_KEY_HERE' && activeKey.trim() !== '';
+          const activeGenAI = hasValidKey ? new GoogleGenerativeAI(activeKey) : null;
+
+          if (activeGenAI) {
             try {
               const prompt = `
                 We are targeting the location: "${resolvedName}" at coordinates [LAT: ${lat.toFixed(4)}, LNG: ${lng.toFixed(4)}].
@@ -836,7 +849,7 @@ export const useOSStore = create<OSState>()(
                 Do not wrap the response in markdown blocks (e.g. do not use \`\`\`json). Return ONLY the raw JSON string starting with { and ending with }.
               `;
 
-              const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+              const model = activeGenAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
               const result = await model.generateContent(prompt);
               const textResult = result.response.text().trim();
               

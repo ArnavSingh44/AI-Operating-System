@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useOSStore } from '../store/useOSStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Sliders, Volume2, ShieldAlert, Download, Trash2, Cpu, RefreshCw } from 'lucide-react';
+import { X, User, Sliders, Volume2, ShieldAlert, Download, Trash2, Cpu, RefreshCw, Key } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
   const { 
@@ -115,6 +115,33 @@ export const AdminPanel: React.FC = () => {
                       </select>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* API Credentials */}
+              <div className="flex flex-col gap-2.5">
+                <span className="text-[9px] text-white/30 font-orbitron tracking-widest block uppercase">
+                  A.E.G.I.S. Cognitive API Sync
+                </span>
+                <div className="p-4 bg-black/30 border border-white/5 rounded-md flex flex-col gap-2 hover:border-cyber-purple/15 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded bg-cyber-pink/10 border border-cyber-pink/30">
+                      <Key size={16} className="text-cyber-pink" />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-1">
+                      <label className="text-[8px] text-white/40 font-orbitron tracking-wider">GEMINI API KEY</label>
+                      <input
+                        type="password"
+                        placeholder="PASTE GOOGLE AI STUDIO API KEY..."
+                        value={adminSettings.geminiApiKey || ''}
+                        onChange={(e) => updateAdminSettings({ geminiApiKey: e.target.value })}
+                        className="bg-black/60 border border-white/10 hover:border-cyber-pink/20 focus:border-cyber-pink/40 px-2.5 py-1.5 rounded text-xs font-semibold text-white tracking-widest focus:outline-none focus:shadow-glow-pink w-full font-mono"
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[7.5px] text-white/30 leading-relaxed uppercase mt-1">
+                    * If empty, A.E.G.I.S. defaults to the Vercel build variable. Added keys are saved securely in your local browser Cache.
+                  </span>
                 </div>
               </div>
 
