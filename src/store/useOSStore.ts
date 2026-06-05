@@ -247,6 +247,36 @@ const getMockAIResponse = (input: string, state: OSState): { response: string, l
     };
   }
 
+  if (clean.includes('date') || clean.includes('day is it') || (clean.includes('today') && (clean.includes('what') || clean.includes('tell')))) {
+    const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return {
+      response: `Today's date is ${dateStr}. System temporal chronometer is fully synced.`,
+      logs: ['Chronology request: Date compiled']
+    };
+  }
+
+  if (clean.includes('time')) {
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return {
+      response: `The current system time is ${timeStr}. Time synchronization is connected to atomic master clocks.`,
+      logs: ['Chronology request: Local time retrieved']
+    };
+  }
+
+  if (clean.includes('who are you') || clean.includes('your name') || clean.includes('what is aegis') || clean.includes('what are you')) {
+    return {
+      response: 'I am A.E.G.I.S. (Artificial Electronic Government Intelligent System), your holographic cybernetic assistant. I govern this operating system\'s nodes, diagnostics, telemetry, and speech sub-routines.',
+      logs: ['Identity query resolved']
+    };
+  }
+
+  if (clean.includes('thank you') || clean.includes('thanks')) {
+    return {
+      response: 'You are welcome, Commander. Standing by for further directives.',
+      logs: ['Dialogue interaction: appreciation logged']
+    };
+  }
+
   if (clean.includes('weather')) {
     return {
       response: `Meteorological report for ${state.activeCity}: Currently ${state.weather.temp}°C and ${state.weather.condition}. Let me know if you wish to recalibrate coordinates using \`/weather [city]\`.`,
@@ -270,8 +300,8 @@ const getMockAIResponse = (input: string, state: OSState): { response: string, l
   }
 
   return {
-    response: `Processing request: "${input}". A.E.G.I.S. neural node calculates 99.4% probability that this request can be handled. Let me know if you would like me to compile telemetry logs.`,
-    logs: ['General query parsed by AI core']
+    response: `A.E.G.I.S. offline cognitive processors analyzed: "${input}". (Note: Connect a valid Gemini API key to VITE_GEMINI_API_KEY in your .env file to enable custom AI conversations.)`,
+    logs: ['General query parsed by offline model']
   };
 };
 
